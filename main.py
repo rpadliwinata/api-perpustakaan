@@ -1,7 +1,10 @@
 from datetime import date, datetime
 from typing import Union, List
+from types import SimpleNamespace
 
 from deta import Deta
+from deta.base import FetchResponse
+
 from fastapi import FastAPI, APIRouter, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
@@ -17,6 +20,16 @@ peminjaman = deta.Base("peminjaman")
 
 router_buku = APIRouter()
 router_peminjaman = APIRouter()
+
+
+def get_latest_digit(id_buku: str, result: FetchResponse):
+    data = [SimpleNamespace(**x) for x in result.items]
+    keys = [x.key for x in data]
+    keys = [x for x in keys if id_buku in x]
+    if len(keys) != 0:
+        digit = [int(x[-2:]) for x in keys]
+        return 
+
 
 
 class GetBuku(BaseModel):
@@ -62,16 +75,17 @@ class Buku:
         self.tahunTerbit = kwargs['tahunTerbit']
         self.status = kwargs['status'] or "disimpan"
 
-    def get_for_deta(self):
-        return {
-            "key": self.idBuku,
-            "judulBuku": self.judulBuku,
-            "jumlahHalaman": self.jumlahHalaman,
-            "penulis": self.penulis,
-            "penerbit": self.penerbit,
-            "tahunTerbit": self.tahunTerbit,
-            "status": self.status
-        }
+    def get_for_deta(self, first: bool=True):
+        if first:
+            return {
+                "key": self.idBuku + "01",
+                "judulBuku": self.judulBuku,
+                "jumlahHalaman": self.jumlahHalaman,
+                "penulis": self.penulis,
+                "penerbit": self.penerbit,
+                "tahunTerbit": self.tahunTerbit,
+                "status": self.status
+            }
 
     def get_for_app(self):
         return {
@@ -144,6 +158,7 @@ async def post_buku(book: PostBuku):
     Menyimpan data ke database
     """
     book = Buku(**book.dict())
+    res = buku.get(book.idBuku)
     try:
         buku.insert(book.get_for_deta())
         return JSONResponse(status_code=status.HTTP_200_OK, content={
