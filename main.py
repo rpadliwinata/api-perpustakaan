@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 
-import models
-import db
 import buku
-
+import peminjaman
 
 app = FastAPI(
     title="API Perpustakaan",
@@ -11,3 +9,4 @@ app = FastAPI(
 )
 
 app.include_router(buku.router, prefix="/buku", tags=['Buku'])
+app.include_router(peminjaman.router, prefix="/peminjaman", tags=['Peminjaman'])

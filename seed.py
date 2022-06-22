@@ -1,6 +1,6 @@
 from datetime import datetime
 from db import db_buku
-from models import BukuDB
+from perpustakaan.models import BukuDB
 
 
 data = []

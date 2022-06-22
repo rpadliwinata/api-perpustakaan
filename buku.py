@@ -1,15 +1,24 @@
 from datetime import datetime
-from typing import Union, List
+from typing import Union, ClassVar
 from types import SimpleNamespace
 
 from fastapi import APIRouter, status
 from deta.base import FetchResponse
 
-from models import BukuDB, BukuApp, BukuPost, StatusBuku, Buku, StandardResponse
+from models import BukuDB, BukuApp, BukuPost, StatusBuku, Buku, StandardResponse, PeminjamanApp
 from db import db_buku as db
 
 
 router = APIRouter()
+
+
+def get_for_app(id_record: str, database: db, class_: Union[type(BukuApp)]) ->\
+        Union[BukuApp, PeminjamanApp]:
+    res = database.get(id_record)
+    if 'idBuku' in res:
+        res['idBuku'] = res['key']
+    objek = class_(**res)
+    return objek
 
 
 def get_latest_digit(id_buku: str, result: FetchResponse) -> str:
@@ -23,10 +32,14 @@ def get_latest_digit(id_buku: str, result: FetchResponse) -> str:
         return "-"
 
 
-@router.get("/get", response_model=List[BukuApp])
-async def ambil_data_buku(id_buku: Union[str, None] = None):
-    if id_buku:
-        res = db.get(id_buku)
+@router.get("/get", response_model=StandardResponse)
+async def ambil_data_buku(idBuku: Union[str, None] = None):
+    if idBuku:
+        res = db.get(idBuku)
+        if not res or res['deleted_at'] is not None:
+            return StandardResponse(kode=status.HTTP_404_NOT_FOUND,
+                                    message="Data tidak ditemukan",
+                                    status=False)
         res['idBuku'] = res['key']
         buku = BukuApp(**res)
     else:
@@ -65,6 +78,7 @@ async def simpan_data_buku(buku: BukuPost):
 async def update_data_buku(buku: BukuApp):
     key = buku.idBuku
     buku = Buku(**buku.dict())
+    buku.updated_at = datetime.now().strftime("%d/%m/%Y")
     try:
         db.update(buku.dict(), key)
     except:
@@ -77,7 +91,7 @@ async def update_data_buku(buku: BukuApp):
 @router.delete("/delete", response_model=StandardResponse)
 async def delete_data_buku(idBuku: str):
     buku = Buku(**db.get(idBuku))
-    buku.deleted_at = datetime.today().date().strftime("%d/%m/%Y")
+    buku.deleted_at = datetime.today().strftime("%d/%m/%Y")
     try:
         db.update(buku.dict(), idBuku)
     except:
@@ -90,7 +104,4 @@ async def delete_data_buku(idBuku: str):
                             value=buku)
 
 
-# @router.post("/post", response_model=BukuApp)
-# async def simpan_data_buku(buku: BukuApp):
-#
 

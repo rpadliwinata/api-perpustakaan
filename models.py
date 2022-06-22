@@ -1,6 +1,6 @@
+from enum import Enum
 from typing import Union
 from datetime import date
-from enum import Enum
 from pydantic import BaseModel
 
 
@@ -19,6 +19,13 @@ class Base(BaseModel):
     created_at: Union[date, str] = None
     updated_at: Union[date, str] = None
     deleted_at: Union[date, str] = None
+
+
+class StandardResponse(BaseModel):
+    kode: int
+    message: str
+    status: bool
+    value: Union[list, dict, None] = None
 
 
 class Buku(Base):
@@ -52,25 +59,29 @@ class BukuPost(BaseModel):
     tahunTerbit: int
 
 
-class PeminjamanDB(Base):
-    idPeminjaman: str
+class Peminjaman(Base):
     namaPeminjam: str
-    buku: Buku
-    tanggalPinjam: date
-    statusPeminjaman: StatusPeminjaman
+    buku: Union[BukuApp, dict]
+    tanggalPinjam: Union[date, str]
+    statusPeminjaman: Union[StatusPeminjaman, str]
 
 
-class Peminjaman(BaseModel):
-    idPeminjaman: str
+class PeminjamanDB(Peminjaman):
+    key: Union[str, None] = None
+
+
+class PeminjamanApp(BaseModel):
+    idPeminjaman: Union[str, None] = None
     namaPeminjam: str
-    buku: Buku
-    tanggalPinjam: date
-    statusPeminjaman: StatusPeminjaman
+    buku: BukuApp
+    tanggalPinjam: Union[date, str]
+    statusPeminjaman: Union[str, StatusPeminjaman]
 
 
-class StandardResponse(BaseModel):
-    kode: int
-    message: str
-    status: bool
-    value: Union[list, dict, None] = None
+class PeminjamanPost(BaseModel):
+    namaPeminjam: str
+    idBuku: str
+
+
+
 
