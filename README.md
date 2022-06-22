@@ -6,3 +6,7 @@ Framework yang digunakan untuk API Perpustakaan ini adalah FastAPI yang mengguna
 
 ## Deta.sh
 API sudah bisa diakses [di sini](https://w5bzmo.deta.dev)
+
+
+## Issue
+Buku yang statusnya dipinjam masih bisa dipinjam lagi di post peminjaman
