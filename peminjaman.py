@@ -1,12 +1,10 @@
 from types import SimpleNamespace
-from typing import Union
 from datetime import datetime
 
 from fastapi import APIRouter, status
 from deta.base import FetchResponse
 
-from models import StandardResponse, PeminjamanApp, PeminjamanPost, PeminjamanDB, StatusPeminjaman, BukuApp, StatusBuku
-from models import Peminjaman
+from models import *
 from buku import get_for_app
 from db import db_peminjaman as db
 from db import db_buku
@@ -35,11 +33,18 @@ async def ambil_data_buku(idPeminjaman: Union[str, None] = None):
                                     status=False)
         res['idPeminjaman'] = res['key']
         pinjam = PeminjamanApp(**res)
+        data = pinjam.dict()
+        data['judulBuku'] = data['buku']['judulBuku']
+        pinjam = PeminjamanDashboard(**data)
     else:
         res = db.fetch()
         for x in res.items:
             x['idPeminjaman'] = x['key']
         pinjam = [PeminjamanApp(**x) for x in res.items if x['deleted_at'] is None]
+        data = [x.dict() for x in pinjam]
+        for x in data:
+            x['judulBuku'] = x['buku']['judulBuku']
+        pinjam = [PeminjamanDashboard(**x) for x in data]
     response = StandardResponse(kode=status.HTTP_200_OK,
                                 message="Data berhasil diambil",
                                 status=True,
@@ -69,10 +74,11 @@ async def simpan_data_peminjaman(pinjam: PeminjamanPost):
         pinjam.key = key + "01"
     res = db.insert(pinjam.dict())
     res['idPeminjaman'] = res['key']
+    res['idBuku'] = res['buku']['idBuku']
     response = StandardResponse(kode=status.HTTP_200_OK,
                                 message="Peminjaman berhasil dibuat",
                                 status=True,
-                                value=PeminjamanApp(**res)).dict()
+                                value=PeminjamanID(**res))
     return response
 
 
@@ -109,4 +115,25 @@ async def hapus_data_peminjaman(idPeminjaman: str):
                             message="Berhasil menghapus peminjaman",
                             status=True,
                             value=pinjam.dict())
+
+
+@router.get("/kembalikan/{id_buku}", response_model=StandardResponse)
+async def kembalikan_buku(id_buku):
+    buku = Buku(**db_buku.get(id_buku))
+    buku.updated_at = datetime.now().strftime("%d/%m/%Y")
+    buku.status = StatusBuku.disimpan.value
+    db_buku.update(buku.dict(), id_buku)
+    data = db.fetch({"buku.idBuku": id_buku}).items[0]
+    pinjam = Peminjaman(**data)
+    pinjam.statusPeminjaman = StatusPeminjaman.selesai.value
+    pinjam.updated_at = datetime.now().strftime("%d/%m/%Y")
+    db.update(pinjam.dict(), data['key'])
+    data = pinjam.dict()
+    data['judulBuku'] = data['buku']['judulBuku']
+    pinjam = PeminjamanDashboard(**data)
+    return StandardResponse(kode=status.HTTP_200_OK,
+                            message="Buku berhasil dikembalikan",
+                            status=True,
+                            value=pinjam)
+
 

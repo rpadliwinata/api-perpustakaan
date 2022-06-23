@@ -83,5 +83,17 @@ class PeminjamanPost(BaseModel):
     idBuku: str
 
 
+class PeminjamanDashboard(BaseModel):
+    idPeminjaman: Union[str, None] = None
+    namaPeminjam: str
+    judulBuku: Union[str, None] = None
+    tanggalPinjam: Union[date, str]
+    statusPeminjaman: Union[str, StatusPeminjaman]
 
 
+class PeminjamanID(BaseModel):
+    idPeminjaman: Union[str, None] = None
+    namaPeminjam: str
+    idBuku: Union[str, None] = None
+    tanggalPinjam: Union[date, str]
+    statusPeminjaman: Union[str, StatusPeminjaman]

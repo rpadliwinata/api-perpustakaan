@@ -229,7 +229,6 @@ async def patch_peminjaman(pinjam: PostPeminjaman):
     """
 
 
-
 @app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def home():
     return "https://w5bzmo.deta.dev/docs"
