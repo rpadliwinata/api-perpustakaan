@@ -105,12 +105,16 @@ async def update_data_peminjaman(pinjam: PeminjamanApp):
 async def hapus_data_peminjaman(idPeminjaman: str):
     pinjam = Peminjaman(**db.get(idPeminjaman))
     pinjam.deleted_at = datetime.today().strftime("%d/%m/%Y")
+    pinjam.statusPeminjaman = pinjam.statusPeminjaman.value
     try:
         db.update(pinjam.dict(), idPeminjaman)
-    except:
+    except Exception as e:
         return StandardResponse(kode=status.HTTP_404_NOT_FOUND,
-                                message="Gagal menghapus peminjaman",
+                                message=str(e),
                                 status=False)
+    data = pinjam.dict()
+    data['judulBuku'] = data['buku']['judulBuku']
+    pinjam = PeminjamanDashboard(**data)
     return StandardResponse(kode=status.HTTP_200_OK,
                             message="Berhasil menghapus peminjaman",
                             status=True,
