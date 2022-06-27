@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Union, ClassVar
+from typing import Union
 from types import SimpleNamespace
 
 from fastapi import APIRouter, status
@@ -33,7 +33,7 @@ def get_latest_digit(id_buku: str, result: FetchResponse) -> str:
 
 
 @router.get("/get", response_model=StandardResponse)
-async def ambil_data_buku(idBuku: Union[str, None] = None):
+async def ambil_data_buku(idBuku: Union[str, None] = None) -> StandardResponse:
     if idBuku:
         res = db.get(idBuku)
         if not res or res['deleted_at'] is not None:
